@@ -1,71 +1,233 @@
-        window.addEventListener('DOMContentLoaded', () => {
-            scanGitHubTracksFolder();
-            const savedSongs = localStorage.getItem('my_vault_tracks');
-            if (savedSongs) { try { recentSongs = JSON.parse(savedSongs); renderRecentList(); } catch (e) {} }
-        });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Cosmic Dodge</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <style>
+        /* CSS variables that automatically change based on iOS Light/Dark System settings */
+        :root {
+            --bg-body: #050505;
+            --bg-arena: #0c0c0e;
+            --border-arena: #1c1c22;
+            --text-main: #FFFFFF;
+            --text-muted: #A3A3A3;
+            --grid-line: #141419;
+            --overlay-bg: rgba(5, 5, 5, 0.88);
+            --btn-bg: #FFFFFF;
+            --btn-text: #050505;
+            --ship-fill: #3b82f6;
+            --cockpit-fill: #ffffff;
+        }
 
-        fileInput.addEventListener('change', (e) => {
-            const files = e.target.files;
-            if (files && files.length > 0) {
-                const file = files; trackName.innerText = file.name;
-                audio.src = URL.createObjectURL(file); audio.play();
-                playBtn.innerText = "⏸️"; addSongToRecents(file.name, "LOCAL", "");
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-body: #F4F4F5;
+                --bg-arena: #FFFFFF;
+                --border-arena: #E4E4E7;
+                --text-main: #18181B;
+                --text-muted: #71717A;
+                --grid-line: #F4F4F5;
+                --overlay-bg: rgba(255, 255, 255, 0.92);
+                --btn-bg: #18181B;
+                --btn-text: #FFFFFF;
+                --ship-fill: #1d4ed8;
+                --cockpit-fill: #18181B;
             }
-        });
-
-        function playSecureVaultTrack(title, fileName) {
-            trackName.innerText = title; 
-            // FIXED: Directly routes streams through your public proxy deployment layer
-            audio.src = `https://${user}.github.io/${repo}/tracks/${fileName}`;
-            audio.play(); 
-            playBtn.innerText = "⏸️"; 
-            addSongToRecents(title, "VAULT", fileName);
         }
 
-        playBtn.addEventListener('click', () => {
-            if (!audio.src) return; 
-            if (audio.paused) { audio.play(); playBtn.innerText = "⏸️"; } 
-            else { audio.pause(); playBtn.innerText = "▶️"; }
-        });
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
 
-        audio.addEventListener('timeupdate', () => {
-            if (!isNaN(audio.duration)) {
-                seekSlider.value = (audio.currentTime / audio.duration) * 100;
-                currentTimeDisplay.innerText = formatTime(audio.currentTime);
+        .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 10px 15px 45px 15px;
+            box-sizing: border-box;
+        }
+
+        .scoreboard {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 0 10px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .score-box {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .score-val {
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+            font-size: 16px;
+            margin-left: 4px;
+        }
+
+        #highScoreVal {
+            color: #3b82f6;
+            text-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            background-color: var(--bg-arena);
+            overflow: hidden;
+            border-radius: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Cosmic Dodge</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <style>
+        /* CSS variables that automatically change based on iOS Light/Dark System settings */
+        :root {
+            --bg-body: #050505;
+            --bg-arena: #0c0c0e;
+            --border-arena: #1c1c22;
+            --text-main: #FFFFFF;
+            --text-muted: #A3A3A3;
+            --grid-line: #141419;
+            --overlay-bg: rgba(5, 5, 5, 0.88);
+            --btn-bg: #FFFFFF;
+            --btn-text: #050505;
+            --ship-fill: #3b82f6;
+            --cockpit-fill: #ffffff;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-body: #F4F4F5;
+                --bg-arena: #FFFFFF;
+                --border-arena: #E4E4E7;
+                --text-main: #18181B;
+                --text-muted: #71717A;
+                --grid-line: #F4F4F5;
+                --overlay-bg: rgba(255, 255, 255, 0.92);
+                --btn-bg: #18181B;
+                --btn-text: #FFFFFF;
+                --ship-fill: #1d4ed8;
+                --cockpit-fill: #18181B;
             }
-        });
-        audio.addEventListener('loadedmetadata', () => { durationTimeDisplay.innerText = formatTime(audio.duration); });
-        seekSlider.addEventListener('input', () => { if (audio.src && !isNaN(audio.duration)) { audio.currentTime = (seekSlider.value / 100) * audio.duration; } });
-
-        function formatTime(secs) {
-            const minutes = Math.floor(secs / 60); const seconds = Math.floor(secs % 60);
-            return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
         }
 
-        function addSongToRecents(name, type, filename) {
-            recentSongs = recentSongs.filter(song => song.name !== name);
-            recentSongs.unshift({ name: name, type: type, file: filename });
-            if (recentSongs.length > 6) recentSongs.pop();
-            localStorage.setItem('my_vault_tracks', JSON.stringify(recentSongs));
-            renderRecentList();
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        function renderRecentList() {
-            if (recentSongs.length > 0 && emptyMessage) emptyMessage.style.display = 'none';
-            recentList.innerHTML = "";
-            recentSongs.forEach(song => {
-                const li = document.createElement('li'); li.className = 'song-item'; li.innerText = song.name;
-                li.addEventListener('click', () => {
-                    if (song.type === "VAULT") { playSecureVaultTrack(song.name, song.file); } 
-                    else { trackName.innerText = song.name; alert("Tap 'Browse Files' to reload manual track:\n" + song.name); }
-                });
-                recentList.appendChild(li);
-            });
+        .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 10px 15px 45px 15px;
+            box-sizing: border-box;
         }
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
-    </script>
-</body>
-</html>
+
+        .scoreboard {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 0 10px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .score-box {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .score-val {
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+            font-size: 16px;
+            margin-left: 4px;
+        }
+
+        #highScoreVal {
+            color: #3b82f6;
+            text-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            background-color: var(--bg-arena);
+            overflow: hidden;
+            border-radius: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
         .menu-overlay {
             position: absolute;
             top: 0;
@@ -190,7 +352,7 @@
         function handleTouchEvents(e) {
             if (gameState !== "PLAYING") return;
             if (e.touches.length > 0) {
-                const touch = e.touches[0];
+                const touch = e.touches;
                 const rect = canvas.getBoundingClientRect();
                 const currentWidth = canvas.width / window.devicePixelRatio;
                 const canvasTouchX = ((touch.clientX - rect.left) / rect.width) * currentWidth;
@@ -244,7 +406,7 @@
             const w = canvas.width / window.devicePixelRatio;
             const h = canvas.height / window.devicePixelRatio;
 
-            // Fetch dynamic theme colors from layout on every loop frame update [INDEX]
+            // Fetch dynamic theme colors from layout on every loop frame update
             const styles = getComputedStyle(document.documentElement);
             const gridColor = styles.getPropertyValue('--grid-line').trim();
             const shipColor = styles.getPropertyValue('--ship-fill').trim();
