@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Cosmic Dodge</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
     <style>
-        /* Modern Minimalist Dark Arcade Base Style */
+        /* Immersive Universal View Setup Base */
         body {
             background-color: #050505;
             color: #FFFFFF;
@@ -18,7 +18,6 @@
             width: 100vw;
             height: 100vh;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             box-sizing: border-box;
@@ -27,24 +26,27 @@
             touch-action: none;
         }
 
+        /* Responsive Layout Engine Wrapper Container */
         .game-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 360px;
-            padding: 10px;
+            height: 100%;
+            padding: 15px;
             box-sizing: border-box;
         }
 
-        /* Scoreboard Display Layout */
+        /* Floating HUD Scoreboard Display Overlays */
         .scoreboard {
             width: 100%;
+            max-width: 500px;
             display: flex;
             justify-content: space-between;
             margin-bottom: 12px;
-            padding: 0 5px;
+            padding: 0 10px;
             box-sizing: border-box;
+            z-index: 10;
         }
 
         .score-box {
@@ -58,24 +60,21 @@
         .score-val {
             color: #FFFFFF;
             font-variant-numeric: tabular-nums;
-            font-size: 15px;
+            font-size: 16px;
             margin-left: 4px;
         }
 
         #highScoreVal {
-            color: #3b82f6; /* Neon Blue Glow Highlighting */
+            color: #3b82f6;
             text-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
         }
 
-        /* Neon Frame Play Arena Canvas Container */
+        /* Flexible Canvas View Frame Sandbox */
         .canvas-container {
             position: relative;
             width: 100%;
-            aspect-ratio: 3 / 4;
+            flex: 1; /* Automatically forces canvas to fill all remaining vertical viewport space on phones */
             background-color: #0c0c0e;
-            border: 2px solid #1c1c22;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
             overflow: hidden;
         }
 
@@ -85,14 +84,14 @@
             height: 100%;
         }
 
-        /* Interactive Menu Overlay Layers */
+        /* Immersive System Overlay Cover Panels */
         .menu-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(5, 5, 5, 0.85);
+            background-color: rgba(5, 5, 5, 0.88);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -100,14 +99,14 @@
             padding: 20px;
             box-sizing: border-box;
             text-align: center;
-            border-radius: 18px;
+            z-index: 20;
             transition: opacity 0.3s ease;
         }
 
         h1 {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 800;
-            margin: 0 0 8px 0;
+            margin: 0 0 10px 0;
             letter-spacing: -1px;
             background: linear-gradient(135deg, #3b82f6, #93c5fd);
             -webkit-background-clip: text;
@@ -117,8 +116,8 @@
         .desc-text {
             color: #A3A3A3;
             font-size: 14px;
-            margin: 0 0 24px 0;
-            max-width: 240px;
+            margin: 0 0 28px 0;
+            max-width: 260px;
             line-height: 1.4;
         }
 
@@ -126,34 +125,44 @@
             background-color: #FFFFFF;
             border: none;
             color: #050505;
-            padding: 14px 36px;
+            padding: 16px 44px;
             border-radius: 30px;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 700;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
             -webkit-tap-highlight-color: transparent;
-            transition: transform 0.1s;
         }
 
-        .action-btn:active {
-            transform: scale(0.96);
-            background-color: #E5E5E5;
+        /* --- IPAD TABLET VISUAL DIMENSION SCALING ENGINE --- */
+        @media (min-width: 600px) and (min-height: 600px) {
+            .game-wrapper {
+                width: 460px; /* Expands table layout proportions wider */
+                height: 720px; /* Makes canvas layout view considerably taller */
+            }
+            .canvas-container {
+                border: 2px solid #1c1c22;
+                border-radius: 24px;
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+                flex: none;
+                height: 620px;
+            }
+            .menu-overlay {
+                border-radius: 22px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="game-wrapper">
-        <!-- Score Engine Display Grid -->
         <div class="scoreboard">
             <div class="score-box">Score:<span class="score-val" id="currentScoreVal">0</span></div>
             <div class="score-box">Best:<span class="score-val" id="highScoreVal">0</span></div>
         </div>
 
-        <div class="canvas-container">
-            <canvas id="gameCanvas" width="600" height="800"></canvas>
+        <div class="canvas-container" id="arenaBox">
+            <canvas id="gameCanvas"></canvas>
             
-            <!-- Launch & Game Over Overlay Interface Screen Frame -->
             <div class="menu-overlay" id="menuOverlay">
                 <h1 id="menuTitle">COSMIC DODGE</h1>
                 <p class="desc-text" id="menuDesc">Drag anywhere to slide your fighter starship. Avoid the falling meteors!</p>
@@ -165,6 +174,7 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const arena = document.getElementById('arenaBox');
         const overlay = document.getElementById('menuOverlay');
         const menuTitle = document.getElementById('menuTitle');
         const menuDesc = document.getElementById('menuDesc');
@@ -172,26 +182,34 @@
         const scoreDisplay = document.getElementById('currentScoreVal');
         const highDisplay = document.getElementById('highScoreVal');
 
-        // Core Configuration Game Vectors Layout Matrix
-        let gameState = "MENU"; // MENU, PLAYING, GAMEOVER
+        let gameState = "MENU"; 
         let score = 0;
         let highScore = 0;
         let animationFrameId;
 
-        // Player Entity Frame Setup
-        const player = {
-            x: canvas.width / 2,
-            y: canvas.height - 80,
-            radius: 20,
-            targetX: canvas.width / 2
-        };
-
+        // Reactive tracking coordinates dimensions bounds
+        const player = { x: 0, y: 0, radius: 18, targetX: 0 };
         let obstacles = [];
-        let obstacleSpeedBase = 4;
-        let spawnRate = 0.02; // Initial conditional loop probabilities tick thresholds
+        let obstacleSpeedBase = 5;
+        let spawnRate = 0.025;
 
-        // Load record data logs out of memory arrays instantly on init checks
+        // Auto-Resize Resolution Calibration Engine
+        function dynamicallyScaleGameCanvas() {
+            canvas.width = arena.clientWidth * window.devicePixelRatio;
+            canvas.height = arena.clientHeight * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            
+            player.y = (canvas.height / window.devicePixelRatio) - 70;
+            if (gameState === "MENU") {
+                player.x = (canvas.width / window.devicePixelRatio) / 2;
+                player.targetX = player.x;
+            }
+        }
+
+        window.addEventListener('resize', dynamicallyScaleGameCanvas);
+
         window.addEventListener('DOMContentLoaded', () => {
+            dynamicallyScaleGameCanvas();
             const savedRecord = localStorage.getItem('cosmic_dodge_high');
             if (savedRecord) {
                 highScore = parseInt(savedRecord, 10);
@@ -199,7 +217,6 @@
             }
         });
 
-        // --- MOBILE TOUCH SCREEN CAPTURE POSITION DETECTOR ENGINE ---
         window.addEventListener('touchstart', handleTouchEvents);
         window.addEventListener('touchmove', handleTouchEvents);
 
@@ -208,29 +225,29 @@
             if (e.touches.length > 0) {
                 const touch = e.touches[0];
                 const rect = canvas.getBoundingClientRect();
+                const currentWidth = canvas.width / window.devicePixelRatio;
                 
-                // Track ratio proportions mapping scale points dynamically inside bounding window wrappers
-                const scaleX = canvas.width / rect.width;
-                const canvasTouchX = (touch.clientX - rect.left) * scaleX;
-                
-                // Center boundaries locking restrictions buffers
-                player.targetX = Math.min(Math.max(canvasTouchX, player.radius), canvas.width - player.radius);
+                // Track finger point coordinates offsets mapping ratios
+                const canvasTouchX = ((touch.clientX - rect.left) / rect.width) * currentWidth;
+                player.targetX = Math.min(Math.max(canvasTouchX, player.radius), currentWidth - player.radius);
             }
         }
 
         function initiateGameSession() {
+            dynamicallyScaleGameCanvas();
             overlay.style.opacity = '0';
             setTimeout(() => { overlay.style.display = 'none'; }, 300);
             
-            // State System Profile Resets
             gameState = "PLAYING";
             score = 0;
             scoreDisplay.innerText = score;
             obstacles = [];
-            obstacleSpeedBase = 5;
-            spawnRate = 0.025;
-            player.x = canvas.width / 2;
-            player.targetX = canvas.width / 2;
+            obstacleSpeedBase = 5.5;
+            spawnRate = 0.028;
+            
+            const currentW = canvas.width / window.devicePixelRatio;
+            player.x = currentW / 2;
+            player.targetX = currentW / 2;
 
             cancelAnimationFrame(animationFrameId);
             gameLoopEngineTick();
@@ -240,16 +257,15 @@
             gameState = "GAMEOVER";
             cancelAnimationFrame(animationFrameId);
 
-            // Audit record metrics values against stored buffers
             if (score > highScore) {
                 highScore = score;
                 highDisplay.innerText = highScore;
                 localStorage.setItem('cosmic_dodge_high', highScore.toString());
             }
 
-            // Update UI view display elements frames
             menuTitle.innerText = "MISSION FAILED";
             menuTitle.style.background = "linear-gradient(135deg, #ef4444, #fca5a5)";
+            menuTitle.style.webkitBackgroundClip = "text";
             menuDesc.innerText = `Your fighter was destroyed. \nFinal Score: ${score}`;
             startBtn.innerText = "Try Again";
             
@@ -257,88 +273,84 @@
             setTimeout(() => { overlay.style.opacity = '1'; }, 10);
         }
 
-        // --- PRINCIPAL ARCHIVE GRAPHICS LOGIC RENDER LOOP TICK ENGINE ---
         function gameLoopEngineTick() {
             if (gameState !== "PLAYING") return;
 
-            // 1. Clear Screen Canvas Frame Buffer
-            ctx.fillStyle = '#0c0c0e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const w = canvas.width / window.devicePixelRatio;
+            const h = canvas.height / window.devicePixelRatio;
 
-            // Draw clean subtle backdrop track matrix grid coordinates lines
+            ctx.fillStyle = '#0c0c0e';
+            ctx.fillRect(0, 0, w, h);
+
+            // Matrix Grid Tracker Backdrops
             ctx.strokeStyle = '#141419';
             ctx.lineWidth = 1;
-            for (let i = 0; i < canvas.width; i += 40) {
-                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+            for (let i = 0; i < w; i += 40) {
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke();
             }
 
-            // 2. Linear Interpolation Interpolated Smooth Ship Tracker Math Transitions
-            player.x += (player.targetX - player.x) * 0.25;
+            // Interpolated ship speed tracking glide logic
+            player.x += (player.targetX - player.x) * 0.28;
 
-            // 3. Render Neon Blue Control Vector Player Starship Graphic
+            // Render Player Spaceship Starfighter
             ctx.shadowBlur = 15;
             ctx.shadowColor = '#3b82f6';
             ctx.fillStyle = '#3b82f6';
-            
             ctx.beginPath();
-            ctx.moveTo(player.x, player.y - player.radius); // Nose tip anchor index
-            ctx.lineTo(player.x - player.radius, player.y + player.radius); // Wing tip left corner
-            ctx.lineTo(player.x, player.y + player.radius * 0.4); // Engine exhaust center indents
-            ctx.lineTo(player.x + player.radius, player.y + player.radius); // Wing tip right corner
+            ctx.moveTo(player.x, player.y - player.radius);
+            ctx.lineTo(player.x - player.radius, player.y + player.radius);
+            ctx.lineTo(player.x, player.y + player.radius * 0.4);
+            ctx.lineTo(player.x + player.radius, player.y + player.radius);
             ctx.closePath();
             ctx.fill();
 
-            // Highlight clean white cockpit trim layout
+            ctx.shadowBlur = 0;
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
             ctx.moveTo(player.x, player.y - player.radius * 0.8);
-            ctx.lineTo(player.x - 6, player.y);
-            ctx.lineTo(player.x + 6, player.y);
+            ctx.lineTo(player.x - 5, player.y);
+            ctx.lineTo(player.x + 5, player.y);
             ctx.closePath();
             ctx.fill();
 
-            // 4. Spawn Obstacles Meteors
+            // Obstacles Spawn Loop Generators
             if (Math.random() < spawnRate) {
-                const radius = Math.random() * 16 + 12; // Mapped sizes
+                const radius = Math.random() * 15 + 12;
                 obstacles.push({
-                    x: Math.random() * (canvas.width - radius * 2) + radius,
+                    x: Math.random() * (w - radius * 2) + radius,
                     y: -radius,
                     radius: radius,
                     speed: Math.random() * 3 + obstacleSpeedBase
                 });
             }
 
-            // 5. Update and Draw Obstacles
-            ctx.shadowColor = '#ef4444'; // Red plasma warning glow styling channels
+            // Update Frame Tracking Elements Loops
             ctx.fillStyle = '#ef4444';
-
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 const obs = obstacles[i];
                 obs.y += obs.speed;
 
-                // Render obstacle sphere graphics
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = '#ef4444';
                 ctx.beginPath();
                 ctx.arc(obs.x, obs.y, obs.radius, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Collision Detection Loop Circle Math Framework Checks
+                // Circle Math Matrix Frame Overlap Calculations
                 const distX = obs.x - player.x;
                 const distY = obs.y - player.y;
                 const distance = Math.sqrt(distX * distX + distY * distY);
 
-                // Check overlap boundaries (padded slightly for visual forgiveness balances)
-                if (distance < (obs.radius + player.radius * 0.75)) {
+                if (distance < (obs.radius + player.radius * 0.72)) {
                     triggerGameOverSequence();
                     return;
                 }
 
-                // Delete items safely escaping the bottom map layout edges
-                if (obs.y - obs.radius > canvas.height) {
+                if (obs.y - obs.radius > h) {
                     obstacles.splice(i, 1);
                     score++;
                     scoreDisplay.innerText = score;
 
-                    // Progressively scale difficulty benchmarks as score climbs up
                     if (score % 15 === 0) {
                         obstacleSpeedBase += 0.4;
                         spawnRate += 0.003;
@@ -346,7 +358,6 @@
                 }
             }
 
-            // Reset glow state metrics parameters before recycling canvas loop frames
             ctx.shadowBlur = 0;
             animationFrameId = requestAnimationFrame(gameLoopEngineTick);
         }
