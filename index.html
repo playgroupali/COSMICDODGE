@@ -7,122 +7,6 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
     <style>
-        /* CSS variables that automatically change based on iOS Light/Dark System settings */
-        :root {
-            --bg-body: #050505;
-            --bg-arena: #0c0c0e;
-            --border-arena: #1c1c22;
-            --text-main: #FFFFFF;
-            --text-muted: #A3A3A3;
-            --grid-line: #141419;
-            --overlay-bg: rgba(5, 5, 5, 0.88);
-            --btn-bg: #FFFFFF;
-            --btn-text: #050505;
-            --ship-fill: #3b82f6;
-            --cockpit-fill: #ffffff;
-        }
-
-        @media (prefers-color-scheme: light) {
-            :root {
-                --bg-body: #F4F4F5;
-                --bg-arena: #FFFFFF;
-                --border-arena: #E4E4E7;
-                --text-main: #18181B;
-                --text-muted: #71717A;
-                --grid-line: #F4F4F5;
-                --overlay-bg: rgba(255, 255, 255, 0.92);
-                --btn-bg: #18181B;
-                --btn-text: #FFFFFF;
-                --ship-fill: #1d4ed8;
-                --cockpit-fill: #18181B;
-            }
-        }
-
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .game-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            height: 100%;
-            padding: 10px 15px 45px 15px;
-            box-sizing: border-box;
-        }
-
-        .scoreboard {
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            padding: 0 10px;
-            box-sizing: border-box;
-            z-index: 10;
-        }
-
-        .score-box {
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-        }
-
-        .score-val {
-            color: var(--text-main);
-            font-variant-numeric: tabular-nums;
-            font-size: 16px;
-            margin-left: 4px;
-        }
-
-        #highScoreVal {
-            color: #3b82f6;
-            text-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
-        }
-
-        .canvas-container {
-            position: relative;
-            width: 100%;
-            flex: 1;
-            background-color: var(--bg-arena);
-            overflow: hidden;
-            border-radius: 20px;
-            transition: background-color 0.3s ease;
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Cosmic Dodge</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
-    <style>
-        /* CSS variables that automatically change based on iOS Light/Dark System settings */
         :root {
             --bg-body: #050505;
             --bg-arena: #0c0c0e;
@@ -351,12 +235,19 @@
 
         function handleTouchEvents(e) {
             if (gameState !== "PLAYING") return;
-            if (e.touches.length > 0) {
-                const touch = e.touches;
+            // FIXED: Safeguarded structure scanner array checks to prevent vanishing ship coordinates loops
+            if (e.touches && e.touches.length > 0) {
+                const touch = e.touches[0];
                 const rect = canvas.getBoundingClientRect();
                 const currentWidth = canvas.width / window.devicePixelRatio;
-                const canvasTouchX = ((touch.clientX - rect.left) / rect.width) * currentWidth;
-                player.targetX = Math.min(Math.max(canvasTouchX, player.radius), currentWidth - player.radius);
+                
+                // Block computation failures if finger indexes clip window edges
+                if (touch && touch.clientX) {
+                    const canvasTouchX = ((touch.clientX - rect.left) / rect.width) * currentWidth;
+                    if (!isNaN(canvasTouchX)) {
+                        player.targetX = Math.min(Math.max(canvasTouchX, player.radius), currentWidth - player.radius);
+                    }
+                }
             }
         }
 
@@ -406,7 +297,6 @@
             const w = canvas.width / window.devicePixelRatio;
             const h = canvas.height / window.devicePixelRatio;
 
-            // Fetch dynamic theme colors from layout on every loop frame update
             const styles = getComputedStyle(document.documentElement);
             const gridColor = styles.getPropertyValue('--grid-line').trim();
             const shipColor = styles.getPropertyValue('--ship-fill').trim();
@@ -420,6 +310,10 @@
             for (let i = 0; i < w; i += 40) {
                 ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke();
             }
+
+            // Fallback lock: Prevents ship from sliding off-screen if computation stalls
+            if (isNaN(player.x)) player.x = w / 2;
+            if (isNaN(player.targetX)) player.targetX = w / 2;
 
             player.x += (player.targetX - player.x) * 0.28;
 
